@@ -1,3 +1,3 @@
 import { io } from "socket.io-client";
 
-export const socket = io("http://192.168.114.63:3000");
+export const socket = io("https://server-uhx1.onrender.com");
