@@ -5,6 +5,7 @@ import {
   Image,
   Pressable,
   FlatList,
+  Vibration,
 } from "react-native";
 import BackgroundGradient from "../components/BackgroundGradient";
 import { useEffect, useRef, useState } from "react";
@@ -23,6 +24,7 @@ export default function GameScreen({ route, navigation }) {
   const [isResultRound, setIsResultRound] = useState(false);
   const [playerData, setPlayerData] = useState({});
   const [opponentData, setOpponentData] = useState({});
+  const [displayOpponentMoves, setDisplayOpponentMoves] = useState([]);
 
   const userMovesRef = useRef(userMoves);
   const playerDataRef = useRef(playerData);
@@ -35,7 +37,9 @@ export default function GameScreen({ route, navigation }) {
     playerDataRef.current = playerData;
     opponentDataRef.current = opponentData;
     if (playerData?.playerScore === 3 || opponentData?.playerScore === 3) {
-      navigation.replace("EndGame");
+      socket.emit("gameOver", playerData?.roomId);
+      Vibration.vibrate(1000);
+      navigation.replace("EndGame", playerData?.playerScore);
     }
   }, [userMoves, playerData, opponentData]);
   useEffect(() => {
@@ -113,6 +117,7 @@ export default function GameScreen({ route, navigation }) {
   }, [userMoves]);
 
   function setMoveHandler(val) {
+    Vibration.vibrate(60);
     if (isMinusRound) {
       if (userMoves[0] === userMoves[1]) {
         setUserMoves((prev) => [prev[0]]);
@@ -138,6 +143,7 @@ export default function GameScreen({ route, navigation }) {
       })
       .then(() => {
         setIsMinusRound(true);
+        setDisplayOpponentMoves(opponentDataRef.current.playerMoves);
         if (playerDataRef.current.playerMoves.length < 2) {
           throw "Insufficient Inputs By player";
         } else if (opponentDataRef.current.playerMoves.length < 2) {
@@ -155,14 +161,16 @@ export default function GameScreen({ route, navigation }) {
         } else if (opponentDataRef.current.playerMoves.length !== 1) {
           throw "Insufficient Inputs By opponent";
         }
+        setDisplayOpponentMoves(opponentDataRef.current.playerMoves);
         setIsResultRound(true);
-        setUserMoves([]);
+        // setUserMoves([]);
         setInputsVisibility(false);
         return setTimer(waitTime);
       })
       .then(() => {
         setIsResultRound(false);
         setInputsVisibility(false);
+        setDisplayOpponentMoves([]);
         setPlayerData((cur) => ({ ...cur, playerMoves: [] }));
         setOpponentData((cur) => ({ ...cur, playerMoves: [] }));
         setUserMoves([]);
@@ -174,6 +182,7 @@ export default function GameScreen({ route, navigation }) {
         setPlayerData((cur) => ({ ...cur, playerMoves: [] }));
         setOpponentData((cur) => ({ ...cur, playerMoves: [] }));
         setUserMoves([]);
+        setDisplayOpponentMoves([]);
         if (err === "Insufficient Inputs By player") {
           // socket.emit("insufficientInput", playerData.roomId);
           setInputsVisibility(false);
@@ -291,12 +300,12 @@ export default function GameScreen({ route, navigation }) {
       <View style={styles.container}>
         <View style={styles.outputImageContainer}>
           <FlatList
-            data={opponentData.playerMoves} // The array to render
+            data={displayOpponentMoves} // The array to render
             keyExtractor={(item, index) => index.toString()} // Unique key for each item
             contentContainerStyle={styles.listContainer} // Style for the list container
             // style={styles.listContainer}
             renderItem={({ item }) =>
-              isMinusRound && (
+              (isMinusRound || isResultRound) && (
                 <Image source={moveImages[item]} style={styles.outputImage} />
               )
             }

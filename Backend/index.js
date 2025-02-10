@@ -36,6 +36,7 @@ const rooms = {};
 
 io.on("connection", (socket) => {
   socket.on("join", (userName) => {
+    console.log("join request");
     if (_.isEmpty(rooms)) {
       createRoom(socket.id, userName);
     } else {
@@ -97,7 +98,13 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("insufficientInput", (roomId) => {});
+  socket.on("gameOver", (roomId) => {
+    delete rooms[roomId];
+  });
+
+  socket.on("disconnect", () => {
+    console.log("disconnected");
+  });
 });
 
 io.listen(3000, () => {

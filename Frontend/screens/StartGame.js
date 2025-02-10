@@ -107,6 +107,6 @@ const styles = StyleSheet.create({
     width: 150,
     borderRadius: 6,
     overflow: "hidden",
-    marginVertical: "6",
+    marginVertical: 6,
   },
 });
