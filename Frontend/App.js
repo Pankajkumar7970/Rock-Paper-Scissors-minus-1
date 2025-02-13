@@ -5,14 +5,22 @@ import StartGame from "./screens/StartGame";
 import WaitingScreen from "./screens/WaitingScreen";
 import GameScreen from "./screens/GameScreen";
 import EndGameScreen from "./screens/EndGameScreen";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView /* , Platform  */ } from "react-native";
 import { BackHandler } from "react-native";
 import { useEffect } from "react";
+// import * as ScreenOrientation from "expo-screen-orientation";
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   useEffect(() => {
+    // ScreenOrientation.lockAsync(ScreenOrientation.Orientation.LANDSCAPE);
+    // if (Platform.OS === "web") {
+    //   //     ScreenOrientation.lockPlatformAsync(
+    //   //       ScreenOrientation.WebOrientationLock.LANDSCAPE
+    //   //     );
+    // }
+
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       () => true

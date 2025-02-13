@@ -6,6 +6,7 @@ import {
   Pressable,
   FlatList,
   Vibration,
+  ActivityIndicator,
 } from "react-native";
 import BackgroundGradient from "../components/BackgroundGradient";
 import { useEffect, useRef, useState } from "react";
@@ -25,10 +26,12 @@ export default function GameScreen({ route, navigation }) {
   const [playerData, setPlayerData] = useState({});
   const [opponentData, setOpponentData] = useState({});
   const [displayOpponentMoves, setDisplayOpponentMoves] = useState([]);
+  const [isConnected, setIsConnected] = useState();
 
   const userMovesRef = useRef(userMoves);
   const playerDataRef = useRef(playerData);
   const opponentDataRef = useRef(opponentData);
+  const isConnectedRef = useRef(isConnected);
 
   const playersData = route.params;
 
@@ -36,17 +39,36 @@ export default function GameScreen({ route, navigation }) {
     userMovesRef.current = userMoves;
     playerDataRef.current = playerData;
     opponentDataRef.current = opponentData;
+    isConnectedRef.current = isConnected;
     if (playerData?.playerScore === 3 || opponentData?.playerScore === 3) {
-      socket.emit("gameOver", playerData?.roomId);
+      console.log(playerData?.roomId);
+      socket.emit("gameOver", playerData.roomId);
       Vibration.vibrate(1000);
       navigation.replace("EndGame", playerData?.playerScore);
     }
-  }, [userMoves, playerData, opponentData]);
+  }, [userMoves, playerData, opponentData, isConnected]);
   useEffect(() => {
+    setIsConnected(true);
     dataHandler(playersData);
 
     socket.on("data", (data) => {
       dataHandler(data);
+    });
+
+    socket.on("opponentDisconnected", () => {
+      console.log("opponent disconnected");
+      setIsConnected(false);
+    });
+    socket.on("reconnect", () => {
+      console.log("connected again");
+      // if (socket.recovered) {
+      //   console.log("reconnected");
+      //   socket.emit("reconnected", playerData.roomId);
+      // }
+    });
+
+    socket.on("opponentReconnected", () => {
+      setIsConnected(true);
     });
   }, []);
 
@@ -92,7 +114,7 @@ export default function GameScreen({ route, navigation }) {
   const setTimer = (time) => {
     return new Promise((resolve) => {
       const interval = setInterval(() => {
-        if (time > 0) {
+        if (time > 0 && isConnectedRef.current) {
           time = time - 1;
           setTiming(time);
         }
@@ -225,6 +247,7 @@ export default function GameScreen({ route, navigation }) {
 
   return (
     <BackgroundGradient>
+      {!isConnected && <ActivityIndicator style={styles.disconnectedLoader} />}
       {inputsVisibility && (
         <View style={styles.inputContainer}>
           <Pressable
@@ -268,7 +291,6 @@ export default function GameScreen({ route, navigation }) {
           </Pressable>
         </View>
       )}
-
       <View style={styles.playerInfoContainer}>
         <View style={styles.playerInfo}>
           <Text style={[styles.playerName, styles.lightText]}>
@@ -444,5 +466,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     // backgroundColor: "black",
     alignContent: "center",
+  },
+  disconnectedLoader: {
+    position: "absolute",
+    zIndex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    width: "100%",
+    height: "100%",
   },
 });
