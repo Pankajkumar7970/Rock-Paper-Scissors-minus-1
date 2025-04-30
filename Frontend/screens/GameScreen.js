@@ -26,7 +26,10 @@ export default function GameScreen({ route, navigation }) {
   const [playerData, setPlayerData] = useState({});
   const [opponentData, setOpponentData] = useState({});
   const [displayOpponentMoves, setDisplayOpponentMoves] = useState([]);
-  const [isConnected, setIsConnected] = useState();
+  const [isConnected, setIsConnected] = useState({
+    player: "",
+    opponent: "",
+  });
 
   const userMovesRef = useRef(userMoves);
   const playerDataRef = useRef(playerData);
@@ -48,7 +51,10 @@ export default function GameScreen({ route, navigation }) {
     }
   }, [userMoves, playerData, opponentData, isConnected]);
   useEffect(() => {
-    setIsConnected(true);
+    setIsConnected({
+      player: true,
+      opponent: true,
+    });
     dataHandler(playersData);
 
     socket.on("data", (data) => {
@@ -57,18 +63,17 @@ export default function GameScreen({ route, navigation }) {
 
     socket.on("opponentDisconnected", () => {
       console.log("opponent disconnected");
-      setIsConnected(false);
-    });
-    socket.on("reconnect", () => {
-      console.log("connected again");
-      // if (socket.recovered) {
-      //   console.log("reconnected");
-      //   socket.emit("reconnected", playerData.roomId);
-      // }
+      setIsConnected((prev) => ({ ...prev, opponent: false }));
     });
 
+    socket.on("reconnect", () => {
+      setIsConnected((prev) => ({ ...prev, player: true }));
+    });
+    socket.on("disconnect", () => {
+      setIsConnected((prev) => ({ ...prev, player: false }));
+    });
     socket.on("opponentReconnected", () => {
-      setIsConnected(true);
+      setIsConnected((prev) => ({ ...prev, opponent: true }));
     });
   }, []);
 
@@ -114,7 +119,11 @@ export default function GameScreen({ route, navigation }) {
   const setTimer = (time) => {
     return new Promise((resolve) => {
       const interval = setInterval(() => {
-        if (time > 0 && isConnectedRef.current) {
+        if (
+          time > 0 &&
+          isConnectedRef.current.player &&
+          isConnectedRef.current.opponent
+        ) {
           time = time - 1;
           setTiming(time);
         }
@@ -247,7 +256,9 @@ export default function GameScreen({ route, navigation }) {
 
   return (
     <BackgroundGradient>
-      {!isConnected && <ActivityIndicator style={styles.disconnectedLoader} />}
+      {(!isConnected.player || !isConnected.opponent) && (
+        <ActivityIndicator style={styles.disconnectedLoader} />
+      )}
       {inputsVisibility && (
         <View style={styles.inputContainer}>
           <Pressable

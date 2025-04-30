@@ -32,18 +32,16 @@ export default function App() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar style="light" />
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <Stack.Screen name="Home" component={StartGame} />
-          <Stack.Screen name="Waiting" component={WaitingScreen} />
-          <Stack.Screen name="GameScreen" component={GameScreen} />
-          <Stack.Screen name="EndGame" component={EndGameScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="Home" component={StartGame} />
+        <Stack.Screen name="Waiting" component={WaitingScreen} />
+        <Stack.Screen name="GameScreen" component={GameScreen} />
+        <Stack.Screen name="EndGame" component={EndGameScreen} />
+      </Stack.Navigator>
     </SafeAreaView>
   );
 }
